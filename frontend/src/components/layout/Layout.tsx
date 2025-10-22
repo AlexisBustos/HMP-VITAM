@@ -6,7 +6,7 @@ interface LayoutProps {
 }
 
 export const Layout = ({ children }: LayoutProps) => {
-  const { user, logout, hasRole } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -14,7 +14,7 @@ export const Layout = ({ children }: LayoutProps) => {
     navigate('/login');
   };
 
-  const isAdmin = hasRole('ADMIN_GENERAL', 'ADMIN_PRO_CLINICO');
+  const isAdmin = user?.role === 'ADMIN_GENERAL' || user?.role === 'ADMIN_PRO_CLINICO';
 
   return (
     <div className="min-h-screen bg-gray-100">
