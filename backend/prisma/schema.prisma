@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id    Int    @id @default(autoincrement())
+  name  String @unique // ADMIN_GENERAL | ADMIN_PRO_CLINICO | PERSONA_NATURAL
+  users User[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  roleId    Int
+  role      Role     @relation(fields: [roleId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  paciente  Paciente?
+}
+
+model Paciente {
+  id           Int      @id @default(autoincrement())
+  rut          String   @unique
+  firstName    String
+  lastName     String
+  birthDate    DateTime
+  sex          String
+  genderId     String?   // identidad de género opcional
+  marital      String?
+  nationality  String?
+  address      String?
+  city         String?
+  region       String?
+  phone        String?
+  email        String?
+  education    String?
+  emergency    String?
+  // Ficha médica
+  chronic      String?    // JSON stringificado o tabla relacional en fase 2
+  allergies    String?   
+  surgeries    String?   
+  meds         String?   
+  familyHx     String?   
+  habits       String?    // { tabaco:Fagerstrom, alcohol:AUDIT, actividadFisica, horasSueno }
+  anthropo     String?    // { peso, talla, imc, cintura }
+  vitals       String?    // { pa, fc, spo2 }
+  mental       String?    // { estres, sintomas }
+  notes        String?   
+  userId       Int?      @unique // link opcional a usuario PERSONA_NATURAL
+  user         User?     @relation(fields: [userId], references: [id])
+  consultas    Consulta[]
+  examenes     Examen[]
+  seguimientos Seguimiento[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Consulta {
+  id            Int      @id @default(autoincrement())
+  pacienteId    Int
+  paciente      Paciente @relation(fields: [pacienteId], references: [id])
+  motivo        String   
+  cie10         String?
+  indicaciones  String?  
+  medsIndicadas String?  
+  createdBy     Int
+  createdAt     DateTime @default(now())
+}
+
+model Examen {
+  id             Int      @id @default(autoincrement())
+  pacienteId     Int
+  paciente       Paciente @relation(fields: [pacienteId], references: [id])
+  tipo           String
+  fecha          DateTime
+  resultados     String?   // JSON { valor, unidades }
+  referencia     String?
+  interpretacion String?  // normal/alterado
+  pdfKey         String?  // S3 object key
+  notas          String?  
+  createdAt      DateTime @default(now())
+}
+
+model Seguimiento {
+  id          Int      @id @default(autoincrement())
+  pacienteId  Int
+  paciente    Paciente @relation(fields: [pacienteId], references: [id])
+  patologia   String   // HTA, DM2, DISLI, OBESIDAD, SALUD_MENTAL
+  fecha       DateTime
+  parametros  String?   // JSON { imc, pa, glicemia, lipidos }
+  adherencia  String?   // JSON { meds, habitos }
+  notas       String?  
+  proximoCtrl DateTime?
+  createdAt   DateTime @default(now())
+}
+

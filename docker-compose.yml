@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # Base de datos MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: hmp-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-hmp_db}
+      MYSQL_USER: ${MYSQL_USER:-hmp_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-hmp_password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - hmp-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hmp-backend
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      JWT_SECRET: ${JWT_SECRET:-change_this_secret_in_production}
+      JWT_EXPIRES: ${JWT_EXPIRES:-7d}
+      DATABASE_URL: mysql://${MYSQL_USER:-hmp_user}:${MYSQL_PASSWORD:-hmp_password}@mysql:3306/${MYSQL_DATABASE:-hmp_db}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-hmp-vitam-bucket}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - hmp-network
+    volumes:
+      - ./backend/uploads:/app/uploads
+
+  # Frontend (Nginx sirviendo archivos estáticos)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080/api}
+    container_name: hmp-frontend
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    networks:
+      - hmp-network
+    volumes:
+      - ./infra/nginx/ssl:/etc/nginx/ssl:ro
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  hmp-network:
+    driver: bridge
+
