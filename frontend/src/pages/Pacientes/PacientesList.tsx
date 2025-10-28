@@ -181,7 +181,7 @@ export const PacientesList = () => {
       <div className="px-4 py-6 sm:px-0">
         <Card
           title="Pacientes"
-          subtitle="Listado de pacientes registrados (Datos de demostración)"
+          subtitle="Listado de pacientes registrados - Haz clic en Ver Ficha para más detalles"
           headerAction={
             <Button onClick={() => navigate('/pacientes/nuevo')}>
               Nuevo Paciente
