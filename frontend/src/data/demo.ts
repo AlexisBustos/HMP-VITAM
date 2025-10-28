@@ -243,4 +243,3 @@ export const demoSeguimientos = [
     createdAt: '2024-10-16T15:00:00Z'
   }
 ];
-
