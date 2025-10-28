@@ -35,6 +35,18 @@ export const PacientesList = () => {
     {
       key: 'phone',
       header: 'Teléfono'
+    },
+    {
+      key: 'actions',
+      header: 'Acciones',
+      render: (item: any) => (
+        <Button
+          onClick={() => navigate(`/pacientes/${item.id}`)}
+          variant="secondary"
+        >
+          Ver Ficha
+        </Button>
+      )
     }
   ];
 
