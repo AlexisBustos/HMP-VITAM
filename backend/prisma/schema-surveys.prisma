@@ -1,0 +1,165 @@
+// Extensión del schema para módulo de encuestas estandarizadas
+// Agregar estos modelos al schema.prisma principal
+
+model Survey {
+  id            Int              @id @default(autoincrement())
+  code          String           @unique // PHQ9, GAD7, AUDIT, etc.
+  name          String
+  version       String
+  ownerOrg      String           // OMS, RAND, etc.
+  licenseType   LicenseType
+  licenseNotes  String?          @db.Text
+  language      String           @default("es-CL")
+  active        Boolean          @default(true)
+  estimatedMins Int?             // Tiempo estimado en minutos
+  loincCode     String?          // Código LOINC si aplica
+  
+  items         SurveyItem[]
+  sessions      SurveySession[]
+  scoringRules  SurveyScoring[]
+  
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  
+  @@index([code, active])
+}
+
+enum LicenseType {
+  OPEN
+  PERMISSION
+  PAID
+  NON_COMMERCIAL
+}
+
+model SurveyItem {
+  id            Int              @id @default(autoincrement())
+  surveyId      Int
+  survey        Survey           @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  
+  itemCode      String           // P1, P2, etc.
+  orderNum      Int
+  text          String           @db.Text
+  responseType  ResponseType
+  optionsJson   String?          @db.Text // JSON con opciones de respuesta
+  reverseScored Boolean          @default(false)
+  subscale      String?          // Para instrumentos con sub-escalas
+  required      Boolean          @default(true)
+  
+  responses     SurveyResponse[]
+  
+  @@unique([surveyId, itemCode])
+  @@index([surveyId, orderNum])
+}
+
+enum ResponseType {
+  LIKERT_0_3    // 0-3 (PHQ-9, GAD-7)
+  LIKERT_0_4    // 0-4 (K10)
+  LIKERT_1_5    // 1-5 (WHO-5)
+  LIKERT_1_10   // 1-10 (SEMCD)
+  VAS_0_100     // Visual Analog Scale
+  YES_NO
+  MULTIPLE_CHOICE
+  NUMERIC
+}
+
+model SurveySession {
+  id            Int              @id @default(autoincrement())
+  patientId     Int
+  patient       Paciente         @relation(fields: [patientId], references: [id])
+  
+  surveyId      Int
+  survey        Survey           @relation(fields: [surveyId], references: [id])
+  
+  clinicianId   Int?
+  clinician     User?            @relation(fields: [clinicianId], references: [id])
+  
+  startedAt     DateTime         @default(now())
+  completedAt   DateTime?
+  contextJson   String?          @db.Text // Contexto: motivo, patología relacionada, etc.
+  consentId     Int?
+  
+  responses     SurveyResponse[]
+  scores        SurveyScore?
+  alerts        SurveyAlert[]
+  
+  @@index([patientId, surveyId])
+  @@index([completedAt])
+}
+
+model SurveyResponse {
+  id            Int              @id @default(autoincrement())
+  sessionId     Int
+  session       SurveySession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  itemId        Int
+  item          SurveyItem       @relation(fields: [itemId], references: [id])
+  
+  valueRaw      String           // Valor original
+  valueNorm     Float?           // Valor normalizado para cálculo
+  answeredAt    DateTime         @default(now())
+  
+  @@index([sessionId])
+}
+
+model SurveyScore {
+  id              Int              @id @default(autoincrement())
+  sessionId       Int              @unique
+  session         SurveySession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  totalScore      Float?
+  subscaleScores  String?          @db.Text // JSON con sub-escalas
+  severityBand    String?          // minimal, mild, moderate, severe, etc.
+  tScore          Float?           // Para PROMIS
+  percentile      Float?
+  interpretation  String?          @db.Text
+  
+  createdAt       DateTime         @default(now())
+  
+  @@index([severityBand])
+}
+
+model SurveyAlert {
+  id            Int              @id @default(autoincrement())
+  sessionId     Int
+  session       SurveySession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  ruleCode      String           // SUICIDE_RISK, HIGH_SEVERITY, etc.
+  severity      AlertSeverity
+  message       String           @db.Text
+  actionPlan    String?          @db.Text
+  
+  createdAt     DateTime         @default(now())
+  resolvedAt    DateTime?
+  resolvedBy    Int?
+  
+  @@index([sessionId, severity])
+  @@index([resolvedAt])
+}
+
+enum AlertSeverity {
+  INFO
+  WARN
+  CRITICAL
+}
+
+model SurveyScoring {
+  id            Int              @id @default(autoincrement())
+  surveyId      Int
+  survey        Survey           @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  
+  bandName      String           // minimal, mild, moderate, etc.
+  minScore      Float
+  maxScore      Float
+  interpretation String          @db.Text
+  colorCode     String?          // Para UI: green, yellow, orange, red
+  
+  @@index([surveyId])
+}
+
+// Relaciones con modelos existentes
+// Agregar a modelo Paciente:
+// surveySessions SurveySession[]
+
+// Agregar a modelo User:
+// surveySessionsConducted SurveySession[]
+

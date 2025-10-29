@@ -6,6 +6,7 @@ import { PacienteDetail } from './pages/Pacientes/PacienteDetail';
 import { ConsultasList } from './pages/Consultas/ConsultasList';
 import { ExamenesList } from './pages/Examenes/ExamenesList';
 import { SeguimientoList } from './pages/Seguimiento/SeguimientoList';
+import EncuestasList from './pages/Encuestas/EncuestasList';
 import { Perfil } from './pages/Perfil/Perfil';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
         <Route path="/consultas" element={<ConsultasList />} />
         <Route path="/examenes" element={<ExamenesList />} />
         <Route path="/seguimiento" element={<SeguimientoList />} />
+        <Route path="/encuestas" element={<EncuestasList />} />
         <Route path="/perfil" element={<Perfil />} />
         
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
