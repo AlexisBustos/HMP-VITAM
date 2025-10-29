@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Layout } from '../../components/layout/Layout';
 import { Card } from '../../components/common/Card';
 import { Table } from '../../components/common/Table';
@@ -6,11 +6,14 @@ import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
 import { Input } from '../../components/common/Input';
 import { SnomedSearch } from '../../components/common/SnomedSearch';
+import { SearchAndFilter, FilterConfig } from '../../components/common/SearchAndFilter';
 import { demoExamenes } from '../../data/demo';
 
 export const ExamenesList = () => {
   const [examenes] = useState(demoExamenes);
   const [showModal, setShowModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState<Record<string, any>>({});
   const [formData, setFormData] = useState({
     pacienteId: '',
     tipo: '',
@@ -21,6 +24,66 @@ export const ExamenesList = () => {
     interpretacion: '',
     notas: ''
   });
+
+  // Configuración de filtros
+  const filterConfig: FilterConfig[] = [
+    {
+      id: 'interpretacion',
+      label: 'Estado del Examen',
+      type: 'select',
+      options: [
+        { value: 'normal', label: 'Normal' },
+        { value: 'alterado', label: 'Alterado' },
+        { value: 'pendiente', label: 'Pendiente' }
+      ]
+    },
+    {
+      id: 'fecha',
+      label: 'Fecha de Toma',
+      type: 'daterange'
+    }
+  ];
+
+  // Filtrar exámenes
+  const filteredExamenes = useMemo(() => {
+    return examenes.filter(examen => {
+      // Búsqueda general
+      if (searchTerm) {
+        const search = searchTerm.toLowerCase();
+        const matchesSearch = 
+          examen.paciente.firstName.toLowerCase().includes(search) ||
+          examen.paciente.lastName.toLowerCase().includes(search) ||
+          examen.tipo.toLowerCase().includes(search);
+        
+        if (!matchesSearch) return false;
+      }
+
+      // Filtro de interpretación/estado
+      if (filters.interpretacion && examen.interpretacion !== filters.interpretacion) {
+        return false;
+      }
+
+      // Filtro de fecha
+      if (filters.fecha_from) {
+        const examenDate = new Date(examen.fecha);
+        const fromDate = new Date(filters.fecha_from);
+        if (examenDate < fromDate) return false;
+      }
+
+      if (filters.fecha_to) {
+        const examenDate = new Date(examen.fecha);
+        const toDate = new Date(filters.fecha_to);
+        if (examenDate > toDate) return false;
+      }
+
+      return true;
+    });
+  }, [examenes, searchTerm, filters]);
+
+  const handleSearch = (term: string, filterValues: Record<string, any>) => {
+    setSearchTerm(term);
+    setFilters(filterValues);
+  };
 
   const getInterpretacionBadge = (interpretacion?: string) => {
     const classes = {
@@ -82,18 +145,48 @@ export const ExamenesList = () => {
       <div className="px-4 py-6 sm:px-0">
         <Card
           title="Exámenes de Laboratorio"
-          subtitle="Registro de resultados y análisis (Datos de demostración)"
+          subtitle={`${filteredExamenes.length} examen(es) encontrado(s)`}
           headerAction={
             <Button onClick={() => setShowModal(true)}>
               Nuevo Examen
             </Button>
           }
         >
-          <Table
-            data={examenes}
-            columns={columns}
-            emptyMessage="No hay exámenes registrados"
+          <SearchAndFilter
+            searchPlaceholder="Buscar por paciente o tipo de examen..."
+            filters={filterConfig}
+            onSearch={handleSearch}
           />
+
+          {filteredExamenes.length === 0 ? (
+            <div className="text-center py-12">
+              <svg
+                className="mx-auto h-12 w-12 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">
+                No existen registros que coincidan con los filtros seleccionados
+              </h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Intenta ajustar los filtros o limpiarlos para ver más resultados
+              </p>
+            </div>
+          ) : (
+            <Table
+              data={filteredExamenes}
+              columns={columns}
+              emptyMessage="No hay exámenes registrados"
+            />
+          )}
         </Card>
 
         <Modal

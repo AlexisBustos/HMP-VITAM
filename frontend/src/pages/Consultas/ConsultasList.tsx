@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Layout } from '../../components/layout/Layout';
 import { Card } from '../../components/common/Card';
 import { Table } from '../../components/common/Table';
@@ -6,11 +6,14 @@ import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
 import { Input } from '../../components/common/Input';
 import { SnomedSearch } from '../../components/common/SnomedSearch';
+import { SearchAndFilter, FilterConfig } from '../../components/common/SearchAndFilter';
 import { demoConsultas } from '../../data/demo';
 
 export const ConsultasList = () => {
   const [consultas] = useState(demoConsultas);
   const [showModal, setShowModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState<Record<string, any>>({});
   const [formData, setFormData] = useState({
     pacienteId: '',
     motivo: '',
@@ -22,6 +25,62 @@ export const ConsultasList = () => {
     medicamentosSnomedId: '',
     dosisMedicamentos: ''
   });
+
+  // Configuración de filtros
+  const filterConfig: FilterConfig[] = [
+    {
+      id: 'profesional',
+      label: 'Profesional Tratante',
+      type: 'select',
+      options: [
+        { value: 'Dr. Juan Pérez', label: 'Dr. Juan Pérez' },
+        { value: 'Dra. María González', label: 'Dra. María González' },
+        { value: 'Dr. Carlos Fernández', label: 'Dr. Carlos Fernández' }
+      ]
+    },
+    {
+      id: 'fecha',
+      label: 'Fecha de Atención',
+      type: 'daterange'
+    }
+  ];
+
+  // Filtrar consultas
+  const filteredConsultas = useMemo(() => {
+    return consultas.filter(consulta => {
+      // Búsqueda general
+      if (searchTerm) {
+        const search = searchTerm.toLowerCase();
+        const matchesSearch = 
+          consulta.paciente.firstName.toLowerCase().includes(search) ||
+          consulta.paciente.lastName.toLowerCase().includes(search) ||
+          consulta.motivo.toLowerCase().includes(search) ||
+          consulta.cie10?.toLowerCase().includes(search);
+        
+        if (!matchesSearch) return false;
+      }
+
+      // Filtro de fecha
+      if (filters.fecha_from) {
+        const consultaDate = new Date(consulta.createdAt);
+        const fromDate = new Date(filters.fecha_from);
+        if (consultaDate < fromDate) return false;
+      }
+
+      if (filters.fecha_to) {
+        const consultaDate = new Date(consulta.createdAt);
+        const toDate = new Date(filters.fecha_to);
+        if (consultaDate > toDate) return false;
+      }
+
+      return true;
+    });
+  }, [consultas, searchTerm, filters]);
+
+  const handleSearch = (term: string, filterValues: Record<string, any>) => {
+    setSearchTerm(term);
+    setFilters(filterValues);
+  };
 
   const columns = [
     {
@@ -69,18 +128,48 @@ export const ConsultasList = () => {
       <div className="px-4 py-6 sm:px-0">
         <Card
           title="Consultas Médicas"
-          subtitle="Registro de atenciones y consultas (Datos de demostración)"
+          subtitle={`${filteredConsultas.length} consulta(s) encontrada(s)`}
           headerAction={
             <Button onClick={() => setShowModal(true)}>
               Nueva Consulta
             </Button>
           }
         >
-          <Table
-            data={consultas}
-            columns={columns}
-            emptyMessage="No hay consultas registradas"
+          <SearchAndFilter
+            searchPlaceholder="Buscar por paciente, motivo o CIE-10..."
+            filters={filterConfig}
+            onSearch={handleSearch}
           />
+
+          {filteredConsultas.length === 0 ? (
+            <div className="text-center py-12">
+              <svg
+                className="mx-auto h-12 w-12 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">
+                No existen registros que coincidan con los filtros seleccionados
+              </h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Intenta ajustar los filtros o limpiarlos para ver más resultados
+              </p>
+            </div>
+          ) : (
+            <Table
+              data={filteredConsultas}
+              columns={columns}
+              emptyMessage="No hay consultas registradas"
+            />
+          )}
         </Card>
 
         <Modal
@@ -189,10 +278,10 @@ export const ConsultasList = () => {
               placeholder="Ej: paracetamol, ibuprofeno, amoxicilina..."
             />
 
-            {(formData as any).medicamentosSnomedId && (
+            {formData.medicamentosSnomedId && (
               <div className="bg-green-50 border border-green-200 rounded-md p-3">
                 <p className="text-sm text-green-800">
-                  <strong>✓ Código SNOMED CT:</strong> {(formData as any).medicamentosSnomedId}
+                  <strong>✓ Código SNOMED CT:</strong> {formData.medicamentosSnomedId}
                 </p>
               </div>
             )}
@@ -202,8 +291,8 @@ export const ConsultasList = () => {
                 Dosis e Indicaciones de Uso
               </label>
               <textarea
-                value={(formData as any).dosisMedicamentos || ''}
-                onChange={(e) => setFormData({ ...formData, dosisMedicamentos: e.target.value } as any)}
+                value={formData.dosisMedicamentos}
+                onChange={(e) => setFormData({ ...formData, dosisMedicamentos: e.target.value })}
                 rows={2}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Ej: 500mg cada 8 horas por 7 días"
