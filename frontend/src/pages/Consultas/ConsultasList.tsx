@@ -7,6 +7,7 @@ import { Modal } from '../../components/common/Modal';
 import { Input } from '../../components/common/Input';
 import { SnomedSearch } from '../../components/common/SnomedSearch';
 import { SearchAndFilter, FilterConfig } from '../../components/common/SearchAndFilter';
+import { exportToCSV } from '../../utils/exportCSV';
 import { demoConsultas } from '../../data/demo';
 
 export const ConsultasList = () => {
@@ -130,9 +131,28 @@ export const ConsultasList = () => {
           title="Consultas Médicas"
           subtitle={`${filteredConsultas.length} consulta(s) encontrada(s)`}
           headerAction={
-            <Button onClick={() => setShowModal(true)}>
-              Nueva Consulta
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  const exportColumns = [
+                    { key: 'createdAt', header: 'Fecha' },
+                    { key: 'paciente.firstName', header: 'Nombre Paciente' },
+                    { key: 'paciente.lastName', header: 'Apellido Paciente' },
+                    { key: 'motivo', header: 'Motivo' },
+                    { key: 'cie10', header: 'CIE-10' },
+                    { key: 'indicaciones', header: 'Indicaciones' },
+                    { key: 'medsIndicadas', header: 'Medicamentos' }
+                  ];
+                  exportToCSV(filteredConsultas, exportColumns, 'consultas');
+                }}
+              >
+                Exportar CSV
+              </Button>
+              <Button onClick={() => setShowModal(true)}>
+                Nueva Consulta
+              </Button>
+            </div>
           }
         >
           <SearchAndFilter

@@ -5,6 +5,7 @@ import { Card } from '../../components/common/Card';
 import { Table } from '../../components/common/Table';
 import { Button } from '../../components/common/Button';
 import { SearchAndFilter, FilterConfig } from '../../components/common/SearchAndFilter';
+import { exportToCSV } from '../../utils/exportCSV';
 import { demoPacientes } from '../../data/demo';
 
 export const PacientesList = () => {
@@ -185,9 +186,29 @@ export const PacientesList = () => {
           title="Pacientes"
           subtitle={`${filteredPacientes.length} paciente(s) encontrado(s)`}
           headerAction={
-            <Button onClick={() => navigate('/pacientes/nuevo')}>
-              Nuevo Paciente
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  const exportColumns = [
+                    { key: 'rut', header: 'RUT' },
+                    { key: 'firstName', header: 'Nombres' },
+                    { key: 'lastName', header: 'Apellidos' },
+                    { key: 'birthDate', header: 'Fecha Nacimiento' },
+                    { key: 'sex', header: 'Sexo' },
+                    { key: 'city', header: 'Ciudad' },
+                    { key: 'phone', header: 'Teléfono' },
+                    { key: 'email', header: 'Email' }
+                  ];
+                  exportToCSV(filteredPacientes, exportColumns, 'pacientes');
+                }}
+              >
+                Exportar CSV
+              </Button>
+              <Button onClick={() => navigate('/pacientes/nuevo')}>
+                Nuevo Paciente
+              </Button>
+            </div>
           }
         >
           <SearchAndFilter

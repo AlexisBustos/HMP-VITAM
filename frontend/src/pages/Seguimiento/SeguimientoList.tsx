@@ -6,6 +6,7 @@ import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
 import { Input } from '../../components/common/Input';
 import { SearchAndFilter, FilterConfig } from '../../components/common/SearchAndFilter';
+import { exportToCSV } from '../../utils/exportCSV';
 import { demoSeguimientos } from '../../data/demo';
 
 const PATOLOGIAS = [
@@ -141,9 +142,29 @@ export const SeguimientoList = () => {
           title="Seguimiento de Patologías Crónicas"
           subtitle={`${filteredSeguimientos.length} seguimiento(s) encontrado(s)`}
           headerAction={
-            <Button onClick={() => setShowModal(true)}>
-              Nuevo Seguimiento
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  const exportColumns = [
+                    { key: 'fecha', header: 'Fecha' },
+                    { key: 'paciente.firstName', header: 'Nombre Paciente' },
+                    { key: 'paciente.lastName', header: 'Apellido Paciente' },
+                    { key: 'patologia', header: 'Patología' },
+                    { key: 'parametros', header: 'Parámetros' },
+                    { key: 'adherencia', header: 'Adherencia' },
+                    { key: 'notas', header: 'Notas' },
+                    { key: 'proximoCtrl', header: 'Próximo Control' }
+                  ];
+                  exportToCSV(filteredSeguimientos, exportColumns, 'seguimientos');
+                }}
+              >
+                Exportar CSV
+              </Button>
+              <Button onClick={() => setShowModal(true)}>
+                Nuevo Seguimiento
+              </Button>
+            </div>
           }
         >
           <SearchAndFilter
