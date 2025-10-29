@@ -18,7 +18,9 @@ export const ConsultasList = () => {
     diagnosticoSnomedId: '',
     cie10: '',
     indicaciones: '',
-    medicamentos: ''
+    medicamentos: '',
+    medicamentosSnomedId: '',
+    dosisMedicamentos: ''
   });
 
   const columns = [
@@ -56,7 +58,9 @@ export const ConsultasList = () => {
       diagnosticoSnomedId: '',
       cie10: '',
       indicaciones: '',
-      medicamentos: ''
+      medicamentos: '',
+      medicamentosSnomedId: '',
+      dosisMedicamentos: ''
     });
   };
 
@@ -162,16 +166,47 @@ export const ConsultasList = () => {
               />
             </div>
 
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+              <p className="text-sm text-blue-800 font-medium mb-1">
+                💊 Búsqueda de Medicamentos
+              </p>
+              <p className="text-xs text-blue-700">
+                Busca medicamentos estandarizados con SNOMED CT
+              </p>
+            </div>
+
+            <SnomedSearch
+              type="medicamentos"
+              value={formData.medicamentos}
+              onChange={(value, conceptId) => 
+                setFormData({ 
+                  ...formData, 
+                  medicamentos: value,
+                  medicamentosSnomedId: conceptId || ''
+                })
+              }
+              label="Medicamentos Indicados (SNOMED CT)"
+              placeholder="Ej: paracetamol, ibuprofeno, amoxicilina..."
+            />
+
+            {(formData as any).medicamentosSnomedId && (
+              <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                <p className="text-sm text-green-800">
+                  <strong>✓ Código SNOMED CT:</strong> {(formData as any).medicamentosSnomedId}
+                </p>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Medicamentos Indicados
+                Dosis e Indicaciones de Uso
               </label>
               <textarea
-                value={formData.medicamentos}
-                onChange={(e) => setFormData({ ...formData, medicamentos: e.target.value })}
+                value={(formData as any).dosisMedicamentos || ''}
+                onChange={(e) => setFormData({ ...formData, dosisMedicamentos: e.target.value } as any)}
                 rows={2}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Medicamentos y dosis..."
+                placeholder="Ej: 500mg cada 8 horas por 7 días"
               />
             </div>
 
