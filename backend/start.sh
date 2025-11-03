@@ -3,9 +3,6 @@ set -e
 
 echo "🚀 Starting HMP Vitam Backend..."
 
-echo "📦 Generating Prisma Client..."
-npx prisma generate
-
 echo "🗄️  Running database migrations..."
 npx prisma migrate deploy
 
