@@ -1,0 +1,17 @@
+#!/bin/bash
+set -e
+
+echo "🚀 Starting HMP Vitam Backend..."
+
+echo "📦 Generating Prisma Client..."
+npx prisma generate
+
+echo "🗄️  Running database migrations..."
+npx prisma migrate deploy
+
+echo "🌱 Seeding database (if needed)..."
+npx prisma db seed || echo "⚠️  Seeding skipped or failed (this is okay)"
+
+echo "✅ Starting server..."
+node dist/server.js
+
