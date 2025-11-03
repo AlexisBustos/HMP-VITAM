@@ -20,14 +20,16 @@ import { Button } from '../../components/common/Button';
 import SurveyRenderer from '../../components/SurveyRenderer';
 import SurveyResults from '../../components/SurveyResults';
 import SurveyTrendChart from '../../components/SurveyTrendChart';
+import NewSurveyModal from '../../components/NewSurveyModal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export default function EncuestasList() {
   const { surveys, surveySessions, addSurveySession, pacientes } = useDemoStore();
-  const [selectedSurvey] = useState<Survey | null>(null);
-  const [selectedPatientId] = useState<number | null>(null);
+  const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<any | null>(null);
   const [showRenderer, setShowRenderer] = useState(false);
+  const [showNewSurveyModal, setShowNewSurveyModal] = useState(false);
   const [viewingSession, setViewingSession] = useState<SurveySession | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'dashboard'>('list');
   const [filterSurvey, setFilterSurvey] = useState<string>('all');
@@ -102,15 +104,24 @@ export default function EncuestasList() {
     a.click();
   };
 
-  if (showRenderer && selectedSurvey && selectedPatientId) {
-    const patient = pacientes.find(p => p.id === selectedPatientId);
+  const handleStartSurvey = (survey: Survey, patient: any) => {
+    setSelectedSurvey(survey);
+    setSelectedPatient(patient);
+    setShowRenderer(true);
+  };
+
+  if (showRenderer && selectedSurvey && selectedPatient) {
     return (
       <SurveyRenderer
         survey={selectedSurvey}
-        patientId={selectedPatientId}
-        patientName={patient?.nombre || ''}
+        patientId={selectedPatient.id}
+        patientName={selectedPatient.nombre || `${selectedPatient.firstName} ${selectedPatient.lastName}`}
         onComplete={handleSurveyComplete}
-        onCancel={() => setShowRenderer(false)}
+        onCancel={() => {
+          setShowRenderer(false);
+          setSelectedSurvey(null);
+          setSelectedPatient(null);
+        }}
       />
     );
   }
@@ -392,14 +403,21 @@ export default function EncuestasList() {
 
         {/* Nueva Evaluación Button */}
         <button
-          onClick={() => {
-            alert('Funcionalidad de nueva evaluación - Seleccionar paciente y encuesta');
-          }}
+          onClick={() => setShowNewSurveyModal(true)}
           className="fixed bottom-8 right-8 bg-primary-600 text-white rounded-full p-4 shadow-lg hover:bg-primary-700 transition-all hover:scale-110 focus:outline-none focus:ring-4 focus:ring-primary-300"
           title="Nueva Evaluación"
         >
           <Plus className="w-6 h-6" />
         </button>
+
+        {/* New Survey Modal */}
+        <NewSurveyModal
+          isOpen={showNewSurveyModal}
+          onClose={() => setShowNewSurveyModal(false)}
+          surveys={surveys}
+          patients={pacientes}
+          onStartSurvey={handleStartSurvey}
+        />
       </div>
     </Layout>
   );
