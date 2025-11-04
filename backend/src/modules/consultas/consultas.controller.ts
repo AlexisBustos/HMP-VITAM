@@ -1,14 +1,16 @@
+import { AuthRequest } from "../common/auth.middleware";
 import { Request, Response } from "express";
+import { AuthRequest } from "../common/auth.middleware";
 import prisma from "../../config/prisma";
 import { consultaSchema } from "../common/validators";
 import { AppError } from "../common/error.handler";
 
-export async function createConsulta(req: Request, res: Response) {
+export async function createConsulta(req: AuthRequest, res: Response) {
   try {
     const user = req.user!;
     const data = consultaSchema.parse({
       ...req.body,
-      createdBy: user.id
+      createdBy: user.userId
     });
     
     // Verificar que el paciente existe
@@ -55,9 +57,6 @@ export async function getConsultas(req: Request, res: Response) {
     
     if (pacienteId) {
       const id = parseInt(pacienteId as string);
-      if (isNaN(id)) {
-        throw new AppError(400, "pacienteId inválido");
-      }
       where.pacienteId = id;
     }
     
@@ -86,11 +85,7 @@ export async function getConsultas(req: Request, res: Response) {
 
 export async function getConsulta(req: Request, res: Response) {
   try {
-    const id = parseInt(req.params.id);
-    
-    if (isNaN(id)) {
-      throw new AppError(400, "ID inválido");
-    }
+    const id = req.params.id;
     
     const consulta = await prisma.consulta.findUnique({
       where: { id },

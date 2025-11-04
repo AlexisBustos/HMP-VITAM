@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { AuthRequest } from "../common/auth.middleware";
 import prisma from "../../config/prisma";
 import { pacienteSchema } from "../common/validators";
 import { AppError } from "../common/error.handler";
@@ -19,15 +20,19 @@ export async function createPaciente(req: Request, res: Response) {
     // Si se proporciona userId, verificar que existe y no está asignado
     if (data.userId) {
       const user = await prisma.user.findUnique({
-        where: { id: data.userId },
-        include: { paciente: true }
+        where: { id: data.userId as string }
       });
       
       if (!user) {
         throw new AppError(400, "Usuario no encontrado");
       }
       
-      if (user.paciente) {
+      // Check if user already has a paciente
+      const existingPaciente = await prisma.paciente.findFirst({
+        where: { userId: data.userId as string }
+      });
+      
+      if (existingPaciente) {
         throw new AppError(400, "Usuario ya tiene un paciente asignado");
       }
     }
@@ -62,14 +67,14 @@ export async function createPaciente(req: Request, res: Response) {
   }
 }
 
-export async function getPacientes(req: Request, res: Response) {
+export async function getPacientes(req: AuthRequest, res: Response) {
   try {
     const user = req.user!;
     
     // PERSONA_NATURAL solo puede ver su propio paciente
-    if (user.role === "PERSONA_NATURAL") {
+    if (user.roles.includes("PERSON")) {
       const paciente = await prisma.paciente.findFirst({
-        where: { userId: user.id },
+        where: { userId: user.userId },
         include: {
           user: {
             select: {
@@ -115,14 +120,10 @@ export async function getPacientes(req: Request, res: Response) {
   }
 }
 
-export async function getPaciente(req: Request, res: Response) {
+export async function getPaciente(req: AuthRequest, res: Response) {
   try {
-    const id = parseInt(req.params.id);
+    const id = req.params.id;
     const user = req.user!;
-    
-    if (isNaN(id)) {
-      throw new AppError(400, "ID inválido");
-    }
     
     const paciente = await prisma.paciente.findUnique({
       where: { id },
@@ -155,7 +156,7 @@ export async function getPaciente(req: Request, res: Response) {
     }
     
     // PERSONA_NATURAL solo puede ver su propio paciente
-    if (user.role === "PERSONA_NATURAL" && paciente.userId !== user.id) {
+    if (user.roles.includes("PERSON") && paciente.userId !== user.userId) {
       throw new AppError(403, "No tiene permisos para ver este paciente");
     }
     
@@ -165,14 +166,10 @@ export async function getPaciente(req: Request, res: Response) {
   }
 }
 
-export async function updatePaciente(req: Request, res: Response) {
+export async function updatePaciente(req: AuthRequest, res: Response) {
   try {
-    const id = parseInt(req.params.id);
+    const id = req.params.id;
     const user = req.user!;
-    
-    if (isNaN(id)) {
-      throw new AppError(400, "ID inválido");
-    }
     
     const existing = await prisma.paciente.findUnique({
       where: { id }
@@ -183,7 +180,7 @@ export async function updatePaciente(req: Request, res: Response) {
     }
     
     // PERSONA_NATURAL solo puede actualizar su propio paciente y solo datos básicos
-    if (user.role === "PERSONA_NATURAL") {
+    if (user.roles.includes("PERSON")) {
       if (existing.userId !== user.id) {
         throw new AppError(403, "No tiene permisos para actualizar este paciente");
       }
