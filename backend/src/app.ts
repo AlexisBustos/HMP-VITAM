@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
 import morgan from "morgan";
+import cookieParser from "cookie-parser";
 import swaggerUi from "swagger-ui-express";
 
 // Routes
@@ -40,6 +41,9 @@ app.use(compression());
 // Body parser
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// Cookie parser
+app.use(cookieParser());
 
 // Logging
 if (process.env.NODE_ENV !== "production") {

@@ -7,33 +7,116 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Role {
-  id    Int    @id @default(autoincrement())
-  name  String @unique // ADMIN_GENERAL | ADMIN_PRO_CLINICO | PERSONA_NATURAL
-  users User[]
+// ============================================
+// AUTHENTICATION & AUTHORIZATION MODELS
+// ============================================
+
+enum RoleName {
+  SUPER_ADMIN
+  CLINICAL_ADMIN
+  PERSON
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  firstName String
-  lastName  String
-  roleId    Int
-  role      Role     @relation(fields: [roleId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  paciente  Paciente?
+  id                   String      @id @default(uuid())
+  email                String      @unique
+  passwordHash         String
+  rut                  String?     @unique
+  firstName            String
+  lastName             String
+  phone                String?
+  dateOfBirth          DateTime?
+  isActive             Boolean     @default(true)
+  isEmailVerified      Boolean     @default(false)
+  passwordResetToken   String?
+  passwordResetExpiry  DateTime?
+  lastLogin            DateTime?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  
+  // Relations
+  userRoles         UserRole[]
+  sessions          Session[]
+  auditLogs         AuditLog[]
+  paciente          Paciente?
+  
+  @@index([email])
+  @@index([createdAt])
+  @@map("users")
 }
 
+model Role {
+  id        String      @id @default(uuid())
+  name      RoleName    @unique
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  
+  // Relations
+  userRoles UserRole[]
+  
+  @@map("roles")
+}
+
+model UserRole {
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model Session {
+  id                String    @id @default(uuid())
+  userId            String
+  ipAddress         String?
+  userAgent         String?
+  expiresAt         DateTime
+  isRevoked         Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  
+  // Relations
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model AuditLog {
+  id        String    @id @default(uuid())
+  userId    String?
+  action    String    // LOGIN_SUCCESS, LOGIN_FAILED, LOGOUT, USER_CREATE, etc.
+  ipAddress String?
+  userAgent String?
+  metadata  String?   // JSON string with additional data
+  createdAt DateTime  @default(now())
+  
+  // Relations
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ============================================
+// HEALTHCARE MODELS
+// ============================================
+
 model Paciente {
-  id           Int      @id @default(autoincrement())
-  rut          String   @unique
+  id           String         @id @default(uuid())
+  rut          String         @unique
   firstName    String
   lastName     String
   birthDate    DateTime
   sex          String
-  genderId     String?   // identidad de género opcional
+  genderId     String?
   marital      String?
   nationality  String?
   address      String?
@@ -43,62 +126,77 @@ model Paciente {
   email        String?
   education    String?
   emergency    String?
-  // Ficha médica
-  chronic      String?    // JSON stringificado o tabla relacional en fase 2
-  allergies    String?   
-  surgeries    String?   
-  meds         String?   
-  familyHx     String?   
-  habits       String?    // { tabaco:Fagerstrom, alcohol:AUDIT, actividadFisica, horasSueno }
-  anthropo     String?    // { peso, talla, imc, cintura }
-  vitals       String?    // { pa, fc, spo2 }
-  mental       String?    // { estres, sintomas }
-  notes        String?   
-  userId       Int?      @unique // link opcional a usuario PERSONA_NATURAL
-  user         User?     @relation(fields: [userId], references: [id])
+  
+  // Medical record
+  chronic      String?
+  allergies    String?
+  surgeries    String?
+  meds         String?
+  familyHx     String?
+  habits       String?
+  anthropo     String?
+  vitals       String?
+  mental       String?
+  notes        String?
+  
+  // Relations
+  userId       String?        @unique
+  user         User?          @relation(fields: [userId], references: [id])
   consultas    Consulta[]
   examenes     Examen[]
   seguimientos Seguimiento[]
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  
+  @@map("pacientes")
 }
 
 model Consulta {
-  id            Int      @id @default(autoincrement())
-  pacienteId    Int
-  paciente      Paciente @relation(fields: [pacienteId], references: [id])
-  motivo        String   
+  id            String   @id @default(uuid())
+  pacienteId    String
+  paciente      Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  motivo        String
   cie10         String?
-  indicaciones  String?  
-  medsIndicadas String?  
-  createdBy     Int
+  indicaciones  String?
+  medsIndicadas String?
+  createdBy     String
   createdAt     DateTime @default(now())
+  
+  @@index([pacienteId])
+  @@map("consultas")
 }
 
 model Examen {
-  id             Int      @id @default(autoincrement())
-  pacienteId     Int
-  paciente       Paciente @relation(fields: [pacienteId], references: [id])
+  id             String   @id @default(uuid())
+  pacienteId     String
+  paciente       Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
   tipo           String
   fecha          DateTime
-  resultados     String?   // JSON { valor, unidades }
+  resultados     String?
   referencia     String?
-  interpretacion String?  // normal/alterado
-  pdfKey         String?  // S3 object key
-  notas          String?  
+  interpretacion String?
+  pdfKey         String?
+  notas          String?
   createdAt      DateTime @default(now())
+  
+  @@index([pacienteId])
+  @@map("examenes")
 }
 
 model Seguimiento {
-  id          Int      @id @default(autoincrement())
-  pacienteId  Int
-  paciente    Paciente @relation(fields: [pacienteId], references: [id])
-  patologia   String   // HTA, DM2, DISLI, OBESIDAD, SALUD_MENTAL
+  id          String    @id @default(uuid())
+  pacienteId  String
+  paciente    Paciente  @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  patologia   String
   fecha       DateTime
-  parametros  String?   // JSON { imc, pa, glicemia, lipidos }
-  adherencia  String?   // JSON { meds, habitos }
-  notas       String?  
+  parametros  String?
+  adherencia  String?
+  notas       String?
   proximoCtrl DateTime?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
+  
+  @@index([pacienteId])
+  @@map("seguimientos")
 }
 
