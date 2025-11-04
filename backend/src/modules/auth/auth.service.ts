@@ -3,7 +3,7 @@ import prisma from '../../config/prisma';
 import { hashPassword, verifyPassword } from '../../utils/password';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../../utils/jwt';
 import { cleanRUT } from '../../utils/rut';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 export interface LoginResult {
   user: {

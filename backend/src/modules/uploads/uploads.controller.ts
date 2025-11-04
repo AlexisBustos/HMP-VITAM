@@ -36,9 +36,6 @@ export async function uploadExamenPdf(req: Request, res: Response) {
     }
     
     const id = parseInt(examenId);
-    if (isNaN(id)) {
-      throw new AppError(400, "examenId inválido");
-    }
     
     // Verificar que el examen existe
     const examen = await prisma.examen.findUnique({
@@ -76,9 +73,6 @@ export async function getExamenPdfUrl(req: Request, res: Response) {
   try {
     const id = parseInt(req.params.examenId);
     
-    if (isNaN(id)) {
-      throw new AppError(400, "examenId inválido");
-    }
     
     const examen = await prisma.examen.findUnique({
       where: { id }

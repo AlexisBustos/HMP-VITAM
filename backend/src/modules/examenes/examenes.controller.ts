@@ -55,9 +55,6 @@ export async function getExamenes(req: Request, res: Response) {
     
     if (pacienteId) {
       const id = parseInt(pacienteId as string);
-      if (isNaN(id)) {
-        throw new AppError(400, "pacienteId inválido");
-      }
       where.pacienteId = id;
     }
     
@@ -86,11 +83,8 @@ export async function getExamenes(req: Request, res: Response) {
 
 export async function getExamen(req: Request, res: Response) {
   try {
-    const id = parseInt(req.params.id);
+    const id = req.params.id;
     
-    if (isNaN(id)) {
-      throw new AppError(400, "ID inválido");
-    }
     
     const examen = await prisma.examen.findUnique({
       where: { id },
@@ -118,11 +112,8 @@ export async function getExamen(req: Request, res: Response) {
 
 export async function updateExamen(req: Request, res: Response) {
   try {
-    const id = parseInt(req.params.id);
+    const id = req.params.id;
     
-    if (isNaN(id)) {
-      throw new AppError(400, "ID inválido");
-    }
     
     const existing = await prisma.examen.findUnique({
       where: { id }

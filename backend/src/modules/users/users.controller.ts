@@ -10,10 +10,11 @@ export async function getUsers(req: Request, res: Response) {
         email: true,
         firstName: true,
         lastName: true,
-        role: {
-          select: {
-            id: true,
-            name: true
+        rut: true,
+        isActive: true,
+        userRoles: {
+          include: {
+            role: true
           }
         },
         createdAt: true,
@@ -24,7 +25,14 @@ export async function getUsers(req: Request, res: Response) {
       }
     });
     
-    res.json({ users });
+    // Transform to include roles array
+    const transformedUsers = users.map(user => ({
+      ...user,
+      roles: user.userRoles.map(ur => ur.role.name),
+      userRoles: undefined
+    }));
+    
+    res.json({ users: transformedUsers });
   } catch (error) {
     throw error;
   }
@@ -32,11 +40,7 @@ export async function getUsers(req: Request, res: Response) {
 
 export async function getUser(req: Request, res: Response) {
   try {
-    const id = parseInt(req.params.id);
-    
-    if (isNaN(id)) {
-      throw new AppError(400, "ID inválido");
-    }
+    const id = req.params.id;
     
     const user = await prisma.user.findUnique({
       where: { id },
@@ -45,10 +49,12 @@ export async function getUser(req: Request, res: Response) {
         email: true,
         firstName: true,
         lastName: true,
-        role: {
-          select: {
-            id: true,
-            name: true
+        rut: true,
+        phone: true,
+        isActive: true,
+        userRoles: {
+          include: {
+            role: true
           }
         },
         paciente: {
@@ -68,7 +74,14 @@ export async function getUser(req: Request, res: Response) {
       throw new AppError(404, "Usuario no encontrado");
     }
     
-    res.json({ user });
+    // Transform to include roles array
+    const transformedUser = {
+      ...user,
+      roles: user.userRoles.map(ur => ur.role.name),
+      userRoles: undefined
+    };
+    
+    res.json({ user: transformedUser });
   } catch (error) {
     throw error;
   }
@@ -76,42 +89,62 @@ export async function getUser(req: Request, res: Response) {
 
 export async function updateUserRole(req: Request, res: Response) {
   try {
-    const id = parseInt(req.params.id);
-    const { roleId } = req.body;
+    const id = req.params.id;
+    const { roleName } = req.body;
     
-    if (isNaN(id) || !roleId) {
-      throw new AppError(400, "ID o roleId inválido");
+    if (!id || !roleName) {
+      throw new AppError(400, "ID o roleName inválido");
     }
     
     // Verificar que el rol existe
     const role = await prisma.role.findUnique({
-      where: { id: roleId }
+      where: { name: roleName }
     });
     
     if (!role) {
-      throw new AppError(400, "Role ID inválido");
+      throw new AppError(400, "Role name inválido");
     }
     
-    const user = await prisma.user.update({
+    // Remove existing roles and add new one
+    await prisma.userRole.deleteMany({
+      where: { userId: id }
+    });
+    
+    await prisma.userRole.create({
+      data: {
+        userId: id,
+        roleId: role.id
+      }
+    });
+    
+    const user = await prisma.user.findUnique({
       where: { id },
-      data: { roleId },
       select: {
         id: true,
         email: true,
         firstName: true,
         lastName: true,
-        role: {
-          select: {
-            id: true,
-            name: true
+        userRoles: {
+          include: {
+            role: true
           }
         }
       }
     });
     
+    if (!user) {
+      throw new AppError(404, "Usuario no encontrado");
+    }
+    
+    const transformedUser = {
+      ...user,
+      roles: user.userRoles.map(ur => ur.role.name),
+      userRoles: undefined
+    };
+    
     res.json({
       message: "Rol actualizado exitosamente",
-      user
+      user: transformedUser
     });
   } catch (error) {
     throw error;
@@ -121,7 +154,7 @@ export async function updateUserRole(req: Request, res: Response) {
 export async function getRoles(req: Request, res: Response) {
   try {
     const roles = await prisma.role.findMany({
-      orderBy: { id: "asc" }
+      orderBy: { name: "asc" }
     });
     
     res.json({ roles });

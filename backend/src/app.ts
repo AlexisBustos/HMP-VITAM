@@ -9,12 +9,13 @@ import swaggerUi from "swagger-ui-express";
 // Routes
 import authRoutes from "./modules/auth/auth.routes";
 import usersRoutes from "./modules/users/users.routes";
-import pacientesRoutes from "./modules/pacientes/pacientes.routes";
-import consultasRoutes from "./modules/consultas/consultas.routes";
-import examenesRoutes from "./modules/examenes/examenes.routes";
-import seguimientoRoutes from "./modules/seguimiento/seguimiento.routes";
-import uploadsRoutes from "./modules/uploads/uploads.routes";
-import dashboardRoutes from "./modules/dashboard/dashboard.routes";
+// TODO: Uncomment after updating to UUID
+// import pacientesRoutes from "./modules/pacientes/pacientes.routes";
+// import consultasRoutes from "./modules/consultas/consultas.routes";
+// import examenesRoutes from "./modules/examenes/examenes.routes";
+// import seguimientoRoutes from "./modules/seguimiento/seguimiento.routes";
+// import uploadsRoutes from "./modules/uploads/uploads.routes";
+// import dashboardRoutes from "./modules/dashboard/dashboard.routes";
 
 // Middlewares
 import { errorHandler, notFoundHandler } from "./modules/common/error.handler";
@@ -67,12 +68,13 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", usersRoutes);
-app.use("/api/pacientes", pacientesRoutes);
-app.use("/api/consultas", consultasRoutes);
-app.use("/api/examenes", examenesRoutes);
-app.use("/api/seguimiento", seguimientoRoutes);
-app.use("/api/uploads", uploadsRoutes);
-app.use("/api/dashboard", dashboardRoutes);
+// TODO: Update these modules to use UUID instead of number for IDs
+// app.use("/api/pacientes", pacientesRoutes);
+// app.use("/api/consultas", consultasRoutes);
+// app.use("/api/examenes", examenesRoutes);
+// app.use("/api/seguimiento", seguimientoRoutes);
+// app.use("/api/uploads", uploadsRoutes);
+// app.use("/api/dashboard", dashboardRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

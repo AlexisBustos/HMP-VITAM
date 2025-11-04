@@ -55,9 +55,6 @@ export async function getSeguimientos(req: Request, res: Response) {
     
     if (pacienteId) {
       const id = parseInt(pacienteId as string);
-      if (isNaN(id)) {
-        throw new AppError(400, "pacienteId inválido");
-      }
       where.pacienteId = id;
     }
     
@@ -90,11 +87,8 @@ export async function getSeguimientos(req: Request, res: Response) {
 
 export async function getSeguimiento(req: Request, res: Response) {
   try {
-    const id = parseInt(req.params.id);
+    const id = req.params.id;
     
-    if (isNaN(id)) {
-      throw new AppError(400, "ID inválido");
-    }
     
     const seguimiento = await prisma.seguimiento.findUnique({
       where: { id },
@@ -122,11 +116,8 @@ export async function getSeguimiento(req: Request, res: Response) {
 
 export async function updateSeguimiento(req: Request, res: Response) {
   try {
-    const id = parseInt(req.params.id);
+    const id = req.params.id;
     
-    if (isNaN(id)) {
-      throw new AppError(400, "ID inválido");
-    }
     
     const existing = await prisma.seguimiento.findUnique({
       where: { id }

@@ -98,7 +98,7 @@ export class AuthService {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        rut: user.rut,
+        rut: user.rut || '',
         roles,
         isActive: user.isActive,
       },
@@ -219,7 +219,7 @@ export class AuthService {
         userRoles: {
           create: {
             role: {
-              connect: { name: Role.PERSON },
+              connect: { name: 'PERSON' },
             },
           },
         },
