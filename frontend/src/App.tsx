@@ -12,49 +12,125 @@ import EncuestasList from './pages/Encuestas/EncuestasList';
 import { Perfil } from './pages/Perfil/Perfil';
 
 // Componente para proteger rutas que requieren autenticación
-const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated } = useAuthStore();
-  return isAuthenticated() ? <>{children}</> : <Navigate to="/login" replace />;
-};
+function PrivateRoute({ children }: { children: React.ReactNode }) {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
+}
+
+// Componente para redireccionar si ya está autenticado
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
+  
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return <>{children}</>;
+}
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         {/* Ruta pública de login */}
-        <Route path="/login" element={<Login />} />
-        
-        {/* Redireccionar raíz a dashboard si está autenticado, sino a login */}
         <Route 
-          path="/" 
+          path="/login" 
           element={
-            <Navigate 
-              to={useAuthStore.getState().isAuthenticated() ? "/dashboard" : "/login"} 
-              replace 
-            />
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
           } 
         />
         
-        {/* Rutas protegidas */}
-        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-        <Route path="/pacientes" element={<PrivateRoute><PacientesList /></PrivateRoute>} />
-        <Route path="/pacientes/nuevo" element={<PrivateRoute><PacienteForm /></PrivateRoute>} />
-        <Route path="/pacientes/:id" element={<PrivateRoute><PacienteDetail /></PrivateRoute>} />
-        <Route path="/consultas" element={<PrivateRoute><ConsultasList /></PrivateRoute>} />
-        <Route path="/examenes" element={<PrivateRoute><ExamenesList /></PrivateRoute>} />
-        <Route path="/seguimiento" element={<PrivateRoute><SeguimientoList /></PrivateRoute>} />
-        <Route path="/encuestas" element={<PrivateRoute><EncuestasList /></PrivateRoute>} />
-        <Route path="/perfil" element={<PrivateRoute><Perfil /></PrivateRoute>} />
+        {/* Redireccionar raíz según autenticación */}
+        <Route 
+          path="/" 
+          element={<Navigate to="/dashboard" replace />} 
+        />
         
-        {/* Ruta catch-all para rutas no encontradas */}
+        {/* Rutas protegidas */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/pacientes" 
+          element={
+            <PrivateRoute>
+              <PacientesList />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/pacientes/nuevo" 
+          element={
+            <PrivateRoute>
+              <PacienteForm />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/pacientes/:id" 
+          element={
+            <PrivateRoute>
+              <PacienteDetail />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/consultas" 
+          element={
+            <PrivateRoute>
+              <ConsultasList />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/examenes" 
+          element={
+            <PrivateRoute>
+              <ExamenesList />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/seguimiento" 
+          element={
+            <PrivateRoute>
+              <SeguimientoList />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/encuestas" 
+          element={
+            <PrivateRoute>
+              <EncuestasList />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/perfil" 
+          element={
+            <PrivateRoute>
+              <Perfil />
+            </PrivateRoute>
+          } 
+        />
+        
+        {/* Ruta catch-all */}
         <Route 
           path="*" 
-          element={
-            <Navigate 
-              to={useAuthStore.getState().isAuthenticated() ? "/dashboard" : "/login"} 
-              replace 
-            />
-          } 
+          element={<Navigate to="/dashboard" replace />} 
         />
       </Routes>
     </BrowserRouter>
