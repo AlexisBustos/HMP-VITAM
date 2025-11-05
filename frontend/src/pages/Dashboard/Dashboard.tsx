@@ -1,23 +1,99 @@
+import { useEffect, useState } from 'react';
 import { Layout } from '../../components/layout/Layout';
 import { Card } from '../../components/common/Card';
+import { dashboardApi } from '../../api/dashboard';
 import { demoMetrics, demoPacientes } from '../../data/demo';
 
+interface DashboardMetrics {
+  pacientesActivos: number;
+  examenesAlterados: number;
+  controlesPendientes: number;
+}
+
+interface Paciente {
+  id: string;
+  rut: string;
+  firstName: string;
+  lastName: string;
+  city: string;
+  createdAt: string;
+}
+
 export const Dashboard = () => {
-  const metrics = demoMetrics;
-  const recentPacientes = demoPacientes.slice(0, 5);
+  const [metrics, setMetrics] = useState<DashboardMetrics>(demoMetrics);
+  const [recentPacientes, setRecentPacientes] = useState<Paciente[]>(demoPacientes.slice(0, 5));
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isDemo, setIsDemo] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Intentar obtener datos del backend
+        const data = await dashboardApi.getMetrics();
+        
+        if (data && data.metrics) {
+          setMetrics(data.metrics);
+          setIsDemo(false);
+        }
+        
+        if (data && data.recentPatients) {
+          setRecentPacientes(data.recentPatients);
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('No se pudo conectar al backend. Mostrando datos de demostración.');
+        setIsDemo(true);
+        // Mantener datos demo en caso de error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Cargando dashboard...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
       <div className="px-4 py-6 sm:px-0">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">Bienvenido al sistema HMP Vitam Healthcare (Modo Demo)</p>
-          <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <p className="text-sm text-blue-800">
-              ℹ️ <strong>Modo Demostración:</strong> Esta es una versión de demostración con datos ficticios. 
-              Puedes navegar por todas las páginas y ver la interfaz completa.
-            </p>
-          </div>
+          <p className="text-gray-600 mt-1">
+            Bienvenido al sistema HMP Vitam Healthcare {isDemo ? '(Modo Demo)' : ''}
+          </p>
+          
+          {isDemo && (
+            <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-800">
+                ℹ️ <strong>Modo Demostración:</strong> Esta es una versión de demostración con datos ficticios. 
+                Puedes navegar por todas las páginas y ver la interfaz completa.
+              </p>
+            </div>
+          )}
+          
+          {error && !isDemo && (
+            <div className="mt-2 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <p className="text-sm text-yellow-800">
+                ⚠️ <strong>Advertencia:</strong> {error}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Métricas */}
@@ -86,22 +162,30 @@ export const Dashboard = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {recentPacientes.map((paciente) => (
-                  <tr key={paciente.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {paciente.rut}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {paciente.firstName} {paciente.lastName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {paciente.city}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(paciente.createdAt).toLocaleDateString('es-CL')}
+                {recentPacientes.length > 0 ? (
+                  recentPacientes.map((paciente) => (
+                    <tr key={paciente.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {paciente.rut}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {paciente.firstName} {paciente.lastName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {paciente.city}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(paciente.createdAt).toLocaleDateString('es-CL')}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">
+                      No hay pacientes registrados
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

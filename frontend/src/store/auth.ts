@@ -18,24 +18,25 @@ interface AuthState {
   hasRole: (role: string) => boolean;
 }
 
-// Usuario demo pre-autenticado
+// Usuario demo pre-autenticado con rol ADMIN_GENERAL para acceso completo
 const demoUser: User = {
   id: 1,
-  email: 'admin@hmp.cl',
+  email: 'admin@hmpvitam.com',
   firstName: 'Administrador',
-  lastName: 'Demo',
+  lastName: 'Sistema',
   role: 'ADMIN_GENERAL'
 };
 
-const demoToken = 'demo-token-123';
+const demoToken = 'demo-token-hmp-vitam-2025';
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
+      // Inicializar con usuario demo para permitir navegación completa
       user: demoUser,
       token: demoToken,
       setAuth: (user, token) => set({ user, token }),
-      logout: () => set({ user: null, token: null }),
+      logout: () => set({ user: demoUser, token: demoToken }), // Volver a demo en lugar de null
       isAuthenticated: () => {
         const { token } = get();
         return !!token;
