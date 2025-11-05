@@ -6,7 +6,7 @@ interface LayoutProps {
 }
 
 export const Layout = ({ children }: LayoutProps) => {
-  const { user, logout } = useAuthStore();
+  const { user, logout, hasAnyRole } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -14,7 +14,8 @@ export const Layout = ({ children }: LayoutProps) => {
     navigate('/login');
   };
 
-  const isAdmin = user?.role === 'ADMIN_GENERAL' || user?.role === 'ADMIN_PRO_CLINICO';
+  // Roles que tienen acceso al menú completo
+  const isAdmin = hasAnyRole(['SUPER_ADMIN', 'ADMIN_GENERAL', 'ADMIN_PRO_CLINICO']);
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -78,7 +79,11 @@ export const Layout = ({ children }: LayoutProps) => {
               <div className="flex-shrink-0">
                 <span className="text-sm text-gray-700 mr-4">
                   {user?.firstName} {user?.lastName}
-                  <span className="ml-2 text-xs text-gray-500">({user?.role})</span>
+                  {user?.roles && user.roles.length > 0 && (
+                    <span className="ml-2 text-xs text-gray-500">
+                      ({user.roles.join(', ')})
+                    </span>
+                  )}
                 </span>
                 <button
                   onClick={handleLogout}

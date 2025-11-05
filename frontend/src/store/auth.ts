@@ -2,11 +2,13 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 interface User {
-  id: number;
+  id: string;
   email: string;
   firstName: string;
   lastName: string;
-  role: string;
+  rut?: string;
+  roles: string[];
+  isActive: boolean;
 }
 
 interface AuthState {
@@ -16,6 +18,7 @@ interface AuthState {
   logout: () => void;
   isAuthenticated: () => boolean;
   hasRole: (role: string) => boolean;
+  hasAnyRole: (roles: string[]) => boolean;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -32,7 +35,11 @@ export const useAuthStore = create<AuthState>()(
       },
       hasRole: (role: string) => {
         const { user } = get();
-        return user?.role === role;
+        return user?.roles?.includes(role) || false;
+      },
+      hasAnyRole: (roles: string[]) => {
+        const { user } = get();
+        return roles.some(role => user?.roles?.includes(role)) || false;
       }
     }),
     {
