@@ -13,7 +13,7 @@ export const PacienteDetail = () => {
   const navigate = useNavigate();
   const { surveySessions, surveys } = useDemoStore();
   
-  const paciente = demoPacientes.find(p => p.id === Number(id));
+  const paciente = demoPacientes.find(p => p.id === id);
   
   // Filtrar encuestas del paciente
   const patientSessions = surveySessions.filter(s => s.patientId === Number(id) && s.completedAt);
