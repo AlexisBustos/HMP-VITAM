@@ -8,7 +8,7 @@ export const demoMetrics = {
 
 export const demoPacientes = [
   {
-    id: 1,
+    id: '1',
     rut: '12.345.678-9',
     firstName: 'Juan',
     lastName: 'Pérez González',
@@ -37,7 +37,7 @@ export const demoPacientes = [
     createdAt: '2024-01-15T10:30:00Z'
   },
   {
-    id: 2,
+    id: '2',
     rut: '23.456.789-0',
     firstName: 'María',
     lastName: 'González Silva',
@@ -66,7 +66,7 @@ export const demoPacientes = [
     createdAt: '2024-02-10T14:20:00Z'
   },
   {
-    id: 3,
+    id: '3',
     rut: '34.567.890-1',
     firstName: 'Pedro',
     lastName: 'Martínez López',
@@ -95,7 +95,7 @@ export const demoPacientes = [
     createdAt: '2024-03-05T09:15:00Z'
   },
   {
-    id: 4,
+    id: '4',
     rut: '45.678.901-2',
     firstName: 'Ana',
     lastName: 'Rodríguez Muñoz',
@@ -124,7 +124,7 @@ export const demoPacientes = [
     createdAt: '2024-03-20T16:45:00Z'
   },
   {
-    id: 5,
+    id: '5',
     rut: '56.789.012-3',
     firstName: 'Carlos',
     lastName: 'Fernández Torres',
@@ -156,7 +156,7 @@ export const demoPacientes = [
 
 export const demoConsultas = [
   {
-    id: 1,
+    id: '1',
     pacienteId: 1,
     paciente: demoPacientes[0],
     motivo: 'Control de hipertensión arterial. Paciente refiere cefalea ocasional.',
@@ -167,7 +167,7 @@ export const demoConsultas = [
     createdAt: '2024-10-15T10:30:00Z'
   },
   {
-    id: 2,
+    id: '2',
     pacienteId: 2,
     paciente: demoPacientes[1],
     motivo: 'Dolor abdominal de 2 días de evolución, tipo cólico.',
@@ -181,7 +181,7 @@ export const demoConsultas = [
 
 export const demoExamenes = [
   {
-    id: 1,
+    id: '1',
     pacienteId: 1,
     paciente: demoPacientes[0],
     tipo: 'Hemograma completo',
@@ -193,7 +193,7 @@ export const demoExamenes = [
     createdAt: '2024-10-10T09:00:00Z'
   },
   {
-    id: 2,
+    id: '2',
     pacienteId: 2,
     paciente: demoPacientes[1],
     tipo: 'Perfil lipídico',
@@ -205,7 +205,7 @@ export const demoExamenes = [
     createdAt: '2024-10-12T11:30:00Z'
   },
   {
-    id: 3,
+    id: '3',
     pacienteId: 3,
     paciente: demoPacientes[2],
     tipo: 'Glicemia en ayunas',
@@ -219,7 +219,7 @@ export const demoExamenes = [
 
 export const demoSeguimientos = [
   {
-    id: 1,
+    id: '1',
     pacienteId: 1,
     paciente: demoPacientes[0],
     patologia: 'HTA',
@@ -231,7 +231,7 @@ export const demoSeguimientos = [
     createdAt: '2024-10-15T10:30:00Z'
   },
   {
-    id: 2,
+    id: '2',
     pacienteId: 2,
     paciente: demoPacientes[1],
     patologia: 'DISLI',
