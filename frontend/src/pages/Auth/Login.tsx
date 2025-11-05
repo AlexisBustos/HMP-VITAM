@@ -17,7 +17,7 @@ export const Login = () => {
       setLoading(true);
       setError('');
       const response = await authApi.login(data);
-      setAuth(response.token, response.user);
+      setAuth(response.user, response.token);
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Error al iniciar sesión');
