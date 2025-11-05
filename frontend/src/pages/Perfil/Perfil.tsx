@@ -70,10 +70,10 @@ export const Perfil = () => {
                   </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-primary-900">
-                      {user.role}
+                      {user.roles?.join(', ')}
                     </p>
                     <p className="text-sm text-primary-700">
-                      {getRoleDescription(user.role)}
+                      {user.roles?.map(r => getRoleDescription(r)).join(', ')}
                     </p>
                   </div>
                 </div>
@@ -86,7 +86,7 @@ export const Perfil = () => {
                 Permisos de Acceso
               </h4>
               <div className="space-y-2">
-                {user.role === 'ADMIN_GENERAL' && (
+                {user.roles?.includes('SUPER_ADMIN') || user.roles?.includes('ADMIN_GENERAL') ? (
                   <>
                     <PermissionItem
                       icon="✓"
@@ -109,9 +109,7 @@ export const Perfil = () => {
                       granted
                     />
                   </>
-                )}
-                
-                {user.role === 'ADMIN_PRO_CLINICO' && (
+                ) : user.roles?.includes('ADMIN_PRO_CLINICO') ? (
                   <>
                     <PermissionItem
                       icon="✓"
@@ -144,9 +142,7 @@ export const Perfil = () => {
                       granted={false}
                     />
                   </>
-                )}
-                
-                {user.role === 'PERSONA_NATURAL' && (
+                ) : user.roles?.includes('PERSONA_NATURAL') ? (
                   <>
                     <PermissionItem
                       icon="✓"
@@ -169,7 +165,7 @@ export const Perfil = () => {
                       granted={false}
                     />
                   </>
-                )}
+                ) : null}
               </div>
             </div>
 
