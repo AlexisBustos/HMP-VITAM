@@ -15,7 +15,7 @@ export const Layout = ({ children }: LayoutProps) => {
   };
 
   // Roles que tienen acceso al menú completo
-  const isAdmin = hasAnyRole(['SUPER_ADMIN', 'ADMIN_GENERAL', 'ADMIN_PRO_CLINICO']);
+  const isAdmin = hasAnyRole(['SUPER_ADMIN', 'ADMIN_GENERAL', 'CLINICAL_ADMIN', 'ADMIN_PRO_CLINICO']);
 
   return (
     <div className="min-h-screen bg-gray-100">
