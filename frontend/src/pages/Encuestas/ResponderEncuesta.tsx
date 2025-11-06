@@ -94,7 +94,7 @@ export function ResponderEncuesta() {
         answers,
       };
 
-      await apiClient.post('/api/surveys/responses', payload);
+      await apiClient.post('/surveys/responses', payload);
 
       // Feedback exitoso
       alert('✅ Encuesta enviada con éxito');
