@@ -34,13 +34,18 @@ export class AuthService {
    * Authenticate user with email and password
    */
   async login(email: string, password: string, ipAddress: string, userAgent: string): Promise<LoginResult> {
-    // Find user with roles
+    // Find user with roles and patient record
     const user = await prisma.user.findUnique({
       where: { email },
       include: {
         userRoles: {
           include: {
             role: true,
+          },
+        },
+        paciente: {
+          select: {
+            id: true,
           },
         },
       },
@@ -68,14 +73,18 @@ export class AuthService {
     // Extract roles
     const roles = user.userRoles.map((ur) => ur.role.name);
 
+    // Get patient ID if exists
+    const patientId = user.paciente?.id;
+
     // Create session
     const session = await this.createSession(user.id, ipAddress, userAgent);
 
-    // Generate tokens
+    // Generate tokens with patientId
     const accessToken = generateAccessToken({
       userId: user.id,
       email: user.email,
       roles,
+      patientId,
     });
 
     const refreshToken = generateRefreshToken({

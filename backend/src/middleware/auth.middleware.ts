@@ -7,6 +7,7 @@ export interface AuthRequest extends Request {
     userId: string;
     email: string;
     roles: string[];
+    patientId?: string; // For PERSON role users
   };
 }
 
@@ -62,6 +63,7 @@ export const requireAuth = async (
       userId: payload.userId,
       email: payload.email,
       roles: payload.roles,
+      patientId: payload.patientId, // May be undefined
     };
 
     next();
@@ -133,6 +135,7 @@ export const optionalAuth = async (
           userId: payload.userId,
           email: payload.email,
           roles: payload.roles,
+          patientId: payload.patientId,
         };
       }
     } catch (error) {
@@ -177,5 +180,112 @@ export const auditLog = (action: string) => {
       next();
     }
   };
+};
+
+
+
+/**
+ * Middleware to require ownership of a resource
+ * Allows access if user has one of the allowed roles OR owns the resource (patientId matches)
+ */
+export const requireOwnership = (
+  getResourcePatientId: (req: AuthRequest) => string | undefined | Promise<string | undefined>,
+  allowedRoles: string[] = ['SUPER_ADMIN', 'CLINICAL_ADMIN']
+) => {
+  return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!req.user) {
+        res.status(401).json({
+          success: false,
+          message: 'Authentication required',
+        });
+        return;
+      }
+
+      // Check if user has one of the allowed roles
+      const hasAllowedRole = req.user.roles.some((role) => allowedRoles.includes(role));
+      
+      if (hasAllowedRole) {
+        // User has admin role, allow access
+        next();
+        return;
+      }
+
+      // User doesn't have admin role, check ownership
+      if (!req.user.patientId) {
+        res.status(403).json({
+          success: false,
+          message: 'Access denied: No patient record associated with your account',
+        });
+        return;
+      }
+
+      // Get the patient ID of the resource being accessed
+      const resourcePatientId = await getResourcePatientId(req);
+
+      if (!resourcePatientId) {
+        res.status(404).json({
+          success: false,
+          message: 'Resource not found',
+        });
+        return;
+      }
+
+      // Check if user owns the resource
+      if (req.user.patientId !== resourcePatientId) {
+        res.status(403).json({
+          success: false,
+          message: 'Access denied: You can only access your own records',
+        });
+        return;
+      }
+
+      // User owns the resource, allow access
+      next();
+    } catch (error) {
+      console.error('Ownership middleware error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error during authorization',
+      });
+    }
+  };
+};
+
+/**
+ * Middleware to require that user is a PERSON with a patient record
+ */
+export const requirePersonWithPatient = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): void => {
+  if (!req.user) {
+    res.status(401).json({
+      success: false,
+      message: 'Authentication required',
+    });
+    return;
+  }
+
+  const isPerson = req.user.roles.includes('PERSON');
+  
+  if (!isPerson) {
+    res.status(403).json({
+      success: false,
+      message: 'This endpoint is only available for personal accounts',
+    });
+    return;
+  }
+
+  if (!req.user.patientId) {
+    res.status(403).json({
+      success: false,
+      message: 'No patient record associated with your account. Please contact support.',
+    });
+    return;
+  }
+
+  next();
 };
 

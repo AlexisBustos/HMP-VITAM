@@ -39,7 +39,7 @@ export const pacienteSchema = z.object({
   vitals: z.string().optional(),
   mental: z.string().optional(),
   notes: z.string().optional(),
-  userId: z.number().int().positive().optional()
+  userId: z.string().uuid().optional()
 });
 
 export const consultaSchema = z.object({

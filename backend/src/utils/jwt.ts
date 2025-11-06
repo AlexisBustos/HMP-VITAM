@@ -5,6 +5,7 @@ export interface AccessTokenPayload {
   userId: string;
   email: string;
   roles: string[];
+  patientId?: string; // For PERSON role users
 }
 
 export interface RefreshTokenPayload {

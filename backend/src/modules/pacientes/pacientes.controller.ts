@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { AuthRequest } from "../common/auth.middleware";
+import { AuthRequest } from "../../middleware/auth.middleware";
 import prisma from "../../config/prisma";
 import { pacienteSchema } from "../common/validators";
 import { AppError } from "../common/error.handler";
@@ -181,7 +181,7 @@ export async function updatePaciente(req: AuthRequest, res: Response) {
     
     // PERSONA_NATURAL solo puede actualizar su propio paciente y solo datos básicos
     if (user.roles.includes("PERSON")) {
-      if (existing.userId !== user.id) {
+      if (existing.userId !== user.userId) {
         throw new AppError(403, "No tiene permisos para actualizar este paciente");
       }
       
@@ -237,6 +237,74 @@ export async function updatePaciente(req: AuthRequest, res: Response) {
       throw new AppError(400, error.errors[0].message);
     }
     throw error;
+  }
+}
+
+
+
+/**
+ * GET /me/patient
+ * Get the patient record for the authenticated PERSON user
+ */
+export async function getMyPatient(req: AuthRequest, res: Response) {
+  try {
+    const user = req.user!;
+
+    if (!user.patientId) {
+      return res.status(404).json({
+        success: false,
+        message: 'No patient record found for your account',
+        suggestion: 'Please contact support to complete your registration',
+      });
+    }
+
+    const paciente = await prisma.paciente.findUnique({
+      where: { id: user.patientId },
+      include: {
+        consultas: {
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        },
+        examenes: {
+          orderBy: { fecha: 'desc' },
+          take: 10,
+        },
+        seguimientos: {
+          orderBy: { fecha: 'desc' },
+          take: 10,
+        },
+        surveyResponses: {
+          include: {
+            template: {
+              select: {
+                code: true,
+                title: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        },
+      },
+    });
+
+    if (!paciente) {
+      return res.status(404).json({
+        success: false,
+        message: 'Patient record not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      data: paciente,
+    });
+  } catch (error) {
+    console.error('Error getting patient record:', error);
+    res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to get patient record',
+    });
   }
 }
 
