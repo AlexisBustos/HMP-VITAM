@@ -294,3 +294,70 @@ export const ALERT_RULES: AlertRule[] = [
   }
 ];
 
+
+
+// ============================================================================
+// Tipos normalizados para render dinámico de encuestas (React Hook Form)
+// ============================================================================
+
+export type SurveyItemTypeNormalized =
+  | 'single'   // opción única (radio)
+  | 'multi'    // múltiple (checkbox[])
+  | 'likert'   // escala 0..n (radio)
+  | 'number'   // numérica
+  | 'text'     // texto libre
+  | 'date';    // fecha
+
+export interface SurveyOptionNormalized {
+  value: string | number;
+  label: string;
+  score?: number; // opcional: score para mapear directo si se requiere
+}
+
+export interface SurveyItemNormalized {
+  id: string;                          // 'q1', 'q2', ...
+  text: string;                        // enunciado
+  type: SurveyItemTypeNormalized;
+  required?: boolean;                  // default false
+  options?: SurveyOptionNormalized[];  // solo para single | multi | likert
+  min?: number;                        // solo number
+  max?: number;                        // solo number
+  step?: number;                       // solo number
+  placeholder?: string;                // text/number
+  help?: string;                       // texto de ayuda
+}
+
+export interface SurveyTemplateNormalized {
+  id: string;
+  version: string;
+  title: string;
+  description?: string;
+  items: SurveyItemNormalized[];
+  scoring?: any;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SurveyAnswerSubmit {
+  itemId: string;
+  value: any; // string | number | string[] | number[] dependiendo del tipo
+}
+
+export interface SurveyResponseSubmitPayload {
+  surveyId: string;
+  answers: SurveyAnswerSubmit[];
+}
+
+export interface SurveyResponseData {
+  id: string;
+  userId: string;
+  patientId?: string;
+  surveyId: string;
+  answers: SurveyAnswerSubmit[];
+  totalScore?: number;
+  interpretation?: string;
+  submittedAt: string;
+  template?: SurveyTemplateNormalized;
+}
+

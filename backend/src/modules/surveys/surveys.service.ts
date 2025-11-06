@@ -127,17 +127,27 @@ export class SurveysService {
       throw new Error('This survey is no longer active');
     }
 
-    // Calculate score based on answers
-    const score = this.calculateScore(data.answers, template.items as any);
+    // Normalize answers: coerce numeric values for scoring
+    const normalizedAnswers = data.answers.map((a) => {
+      let v = a.value;
+      // If value is a string that looks like a number, convert it
+      if (typeof v === 'string' && v !== '' && !Array.isArray(v) && !isNaN(Number(v))) {
+        v = Number(v);
+      }
+      return { itemId: a.itemId, value: v };
+    });
+
+    // Calculate score based on normalized answers
+    const score = this.calculateScore(normalizedAnswers, template.items as any);
     const interpretation = this.getInterpretation(score, template.items as any);
 
-    // Create response
+    // Create response with normalized answers
     return prisma.surveyResponse.create({
       data: {
         surveyId: data.surveyId,
         patientId,
         userId,
-        answers: data.answers as any,
+        answers: normalizedAnswers as any,
         score,
         interpretation,
       },
