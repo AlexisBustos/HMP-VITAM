@@ -41,6 +41,7 @@ export async function login(req: Request, res: Response) {
       data: {
         user: result.user,
         accessToken: result.accessToken,
+        mustAcceptConsent: result.mustAcceptConsent,
       },
     });
   } catch (error) {
