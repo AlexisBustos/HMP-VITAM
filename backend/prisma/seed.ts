@@ -1,5 +1,6 @@
 import { PrismaClient, RoleName } from '@prisma/client';
 import * as argon2 from 'argon2';
+import { createHash } from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -500,6 +501,33 @@ async function main() {
     });
     console.log(`✅ Created survey template: ${template.code} - ${template.title}`);
   }
+
+  // ============================================
+  // 4. CONSENT TEMPLATE
+  // ============================================
+  console.log('\n📋 Creating consent template...');
+
+  const consentBody = `**Finalidad del tratamiento:** Atención clínica, prevención y análisis desnominalizado.
+**Base legal:** Consentimiento (GDPR arts. 6 y 9) y Ley chilena 20.584.
+**Derechos:** Acceso, rectificación, supresión, portabilidad.
+**Seguridad:** Cifrado en tránsito y reposo; control de acceso y auditoría.
+**Contacto:** soporte@vitamhc.cl`;
+
+  const consentHash = createHash('sha256').update(consentBody).digest('hex');
+
+  await prisma.consentTemplate.upsert({
+    where: { version: 1 },
+    update: {},
+    create: {
+      version: 1,
+      title: 'Consentimiento Informado Digital para Uso de Datos de Salud',
+      bodyMarkdown: consentBody,
+      hash: consentHash,
+      isActive: true,
+    },
+  });
+
+  console.log('✅ Created consent template v1');
 
   console.log('\n🎉 Seed completed successfully!\n');
   console.log('📝 Login credentials:\n');

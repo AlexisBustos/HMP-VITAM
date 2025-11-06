@@ -5,14 +5,20 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
   roles?: string[]; // If specified, user must have at least one of these roles
   requirePerson?: boolean; // If true, only PERSON role can access
+  skipConsentCheck?: boolean; // If true, skip consent validation (for /consentimiento route)
 }
 
-export const ProtectedRoute = ({ children, roles, requirePerson }: ProtectedRouteProps) => {
-  const { isAuthenticated, user, hasAnyRole } = useAuthStore();
+export const ProtectedRoute = ({ children, roles, requirePerson, skipConsentCheck }: ProtectedRouteProps) => {
+  const { isAuthenticated, user, hasAnyRole, mustAcceptConsent } = useAuthStore();
 
   // Check if user is authenticated
   if (!isAuthenticated() || !user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Check if user must accept consent (unless explicitly skipped)
+  if (!skipConsentCheck && mustAcceptConsent) {
+    return <Navigate to="/consentimiento" replace />;
   }
 
   // If requirePerson is true, only allow PERSON role

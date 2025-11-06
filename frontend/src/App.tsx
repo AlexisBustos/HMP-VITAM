@@ -14,6 +14,7 @@ import { MisEncuestas } from './pages/Encuestas/MisEncuestas';
 import { ResponderEncuesta } from './pages/Encuestas/ResponderEncuesta';
 import { MiFicha } from './pages/MiFicha/MiFicha';
 import { Perfil } from './pages/Perfil/Perfil';
+import { Consentimiento } from './pages/Consentimiento/Consentimiento';
 
 // Componente para redireccionar si ya está autenticado
 function PublicRoute({ children }: { children: React.ReactNode }) {
@@ -62,6 +63,16 @@ function App() {
         
         {/* Redireccionar raíz según autenticación y rol */}
         <Route path="/" element={<RootRedirect />} />
+        
+        {/* Ruta de consentimiento (protegida pero sin validar consentimiento) */}
+        <Route 
+          path="/consentimiento" 
+          element={
+            <ProtectedRoute skipConsentCheck>
+              <Consentimiento />
+            </ProtectedRoute>
+          } 
+        />
         
         {/* ===== RUTAS PARA PERSON ===== */}
         <Route 

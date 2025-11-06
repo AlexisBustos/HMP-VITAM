@@ -35,11 +35,12 @@ model User {
   updatedAt           DateTime  @updatedAt
 
   // Relations
-  userRoles       UserRole[]
-  sessions        Session[]
-  auditLogs       AuditLog[]
-  paciente        Paciente?
-  surveyResponses SurveyResponse[]
+  userRoles          UserRole[]
+  sessions           Session[]
+  auditLogs          AuditLog[]
+  paciente           Paciente?
+  surveyResponses    SurveyResponse[]
+  consentAcceptances ConsentAcceptance[]
 
   @@index([email])
   @@index([createdAt])
@@ -244,4 +245,41 @@ model SurveyResponse {
   @@index([userId])
   @@index([createdAt])
   @@map("survey_responses")
+}
+
+// ============================================
+// CONSENT MANAGEMENT MODELS
+// ============================================
+
+model ConsentTemplate {
+  id           String   @id @default(uuid())
+  version      Int
+  title        String
+  bodyMarkdown String   @db.Text
+  hash         String // sha256(bodyMarkdown)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  acceptances ConsentAcceptance[]
+
+  @@unique([version])
+  @@map("consent_templates")
+}
+
+model ConsentAcceptance {
+  id               String   @id @default(uuid())
+  userId           String
+  templateId       String
+  acceptedAt       DateTime @default(now())
+  ipAddress        String?
+  userAgent        String?  @db.Text
+  hashAtAcceptance String
+
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template ConsentTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([templateId])
+  @@map("consent_acceptances")
 }

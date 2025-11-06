@@ -18,10 +18,14 @@ export const Login = () => {
       setError('');
       const response = await authApi.login(data);
       const user = response.data.user;
-      setAuth(user, response.data.accessToken);
+      const mustAcceptConsent = response.data.mustAcceptConsent || false;
       
-      // Redirect based on role
-      if (user.roles.includes('PERSON')) {
+      setAuth(user, response.data.accessToken, mustAcceptConsent);
+      
+      // Redirect based on consent status first
+      if (mustAcceptConsent) {
+        navigate('/consentimiento');
+      } else if (user.roles.includes('PERSON')) {
         navigate('/mi-ficha');
       } else if (user.roles.includes('SUPER_ADMIN') || user.roles.includes('CLINICAL_ADMIN')) {
         navigate('/dashboard');

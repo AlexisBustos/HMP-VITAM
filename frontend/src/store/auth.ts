@@ -15,7 +15,9 @@ interface User {
 interface AuthState {
   user: User | null;
   token: string | null;
-  setAuth: (user: User, token: string) => void;
+  mustAcceptConsent: boolean;
+  setAuth: (user: User, token: string, mustAcceptConsent?: boolean) => void;
+  setMustAcceptConsent: (value: boolean) => void;
   logout: () => void;
   isAuthenticated: () => boolean;
   hasRole: (role: string) => boolean;
@@ -28,8 +30,10 @@ export const useAuthStore = create<AuthState>()(
       // Iniciar sin usuario (requiere login)
       user: null,
       token: null,
-      setAuth: (user, token) => set({ user, token }),
-      logout: () => set({ user: null, token: null }),
+      mustAcceptConsent: false,
+      setAuth: (user, token, mustAcceptConsent = false) => set({ user, token, mustAcceptConsent }),
+      setMustAcceptConsent: (value) => set({ mustAcceptConsent: value }),
+      logout: () => set({ user: null, token: null, mustAcceptConsent: false }),
       isAuthenticated: () => {
         const { token } = get();
         return !!token;

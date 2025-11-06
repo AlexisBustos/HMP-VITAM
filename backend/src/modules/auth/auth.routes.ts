@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as authController from './auth.controller';
+import * as activationController from './activation.controller';
 import { requireAuth, auditLog } from '../common/auth.middleware';
 
 const router = Router();
@@ -11,6 +12,10 @@ router.post('/login', authController.login);
 router.post('/register', authController.register);
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
+
+// Activation routes (public)
+router.get('/activate', activationController.verifyActivationToken);
+router.post('/activate', activationController.activateAccount);
 
 /**
  * Semi-public routes (refresh token in cookie)

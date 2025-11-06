@@ -14,9 +14,11 @@ export interface LoginResult {
     rut: string;
     roles: string[];
     isActive: boolean;
+    patientId?: string;
   };
   accessToken: string;
   refreshToken: string;
+  mustAcceptConsent: boolean;
 }
 
 export interface RegisterData {
@@ -101,6 +103,21 @@ export class AuthService {
     // Log successful login
     await this.logAuditEvent(user.id, 'LOGIN_SUCCESS', ipAddress, userAgent);
 
+    // Check if user must accept consent
+    const latest = await prisma.consentTemplate.findFirst({
+      where: { isActive: true },
+      orderBy: { version: 'desc' },
+    });
+
+    let mustAcceptConsent = false;
+
+    if (latest) {
+      const accepted = await prisma.consentAcceptance.findFirst({
+        where: { userId: user.id, templateId: latest.id },
+      });
+      mustAcceptConsent = !accepted || accepted.hashAtAcceptance !== latest.hash;
+    }
+
     return {
       user: {
         id: user.id,
@@ -110,9 +127,11 @@ export class AuthService {
         rut: user.rut || '',
         roles,
         isActive: user.isActive,
+        patientId,
       },
       accessToken,
       refreshToken,
+      mustAcceptConsent,
     };
   }
 
