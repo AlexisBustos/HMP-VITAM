@@ -9,6 +9,7 @@ interface User {
   rut?: string;
   roles: string[];
   isActive: boolean;
+  patientId?: string; // For PERSON role users
 }
 
 interface AuthState {

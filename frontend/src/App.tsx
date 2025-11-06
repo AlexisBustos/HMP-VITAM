@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/auth';
+import { ProtectedRoute } from './routes/ProtectedRoute';
 import { Login } from './pages/Auth/Login';
 import { Dashboard } from './pages/Dashboard/Dashboard';
 import { PacientesList } from './pages/Pacientes/PacientesList';
@@ -9,28 +10,40 @@ import { ConsultasList } from './pages/Consultas/ConsultasList';
 import { ExamenesList } from './pages/Examenes/ExamenesList';
 import { SeguimientoList } from './pages/Seguimiento/SeguimientoList';
 import EncuestasList from './pages/Encuestas/EncuestasList';
+import { MisEncuestas } from './pages/Encuestas/MisEncuestas';
+import { ResponderEncuesta } from './pages/Encuestas/ResponderEncuesta';
+import { MiFicha } from './pages/MiFicha/MiFicha';
 import { Perfil } from './pages/Perfil/Perfil';
 
-// Componente para proteger rutas que requieren autenticación
-function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
+// Componente para redireccionar si ya está autenticado
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, user } = useAuthStore();
   
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+  if (isAuthenticated() && user) {
+    // Redirect based on role
+    if (user.roles.includes('PERSON')) {
+      return <Navigate to="/mi-ficha" replace />;
+    }
+    return <Navigate to="/dashboard" replace />;
   }
   
   return <>{children}</>;
 }
 
-// Componente para redireccionar si ya está autenticado
-function PublicRoute({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
+// Componente para redireccionar la raíz según autenticación y rol
+function RootRedirect() {
+  const { isAuthenticated, user } = useAuthStore();
   
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+  if (!isAuthenticated() || !user) {
+    return <Navigate to="/login" replace />;
   }
   
-  return <>{children}</>;
+  // Redirect based on role
+  if (user.roles.includes('PERSON')) {
+    return <Navigate to="/mi-ficha" replace />;
+  }
+  
+  return <Navigate to="/dashboard" replace />;
 }
 
 function App() {
@@ -47,91 +60,113 @@ function App() {
           } 
         />
         
-        {/* Redireccionar raíz según autenticación */}
+        {/* Redireccionar raíz según autenticación y rol */}
+        <Route path="/" element={<RootRedirect />} />
+        
+        {/* ===== RUTAS PARA PERSON ===== */}
         <Route 
-          path="/" 
-          element={<Navigate to="/dashboard" replace />} 
+          path="/mi-ficha" 
+          element={
+            <ProtectedRoute requirePerson>
+              <MiFicha />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/mis-encuestas" 
+          element={
+            <ProtectedRoute requirePerson>
+              <MisEncuestas />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/encuestas/responder/:id" 
+          element={
+            <ProtectedRoute requirePerson>
+              <ResponderEncuesta />
+            </ProtectedRoute>
+          } 
         />
         
-        {/* Rutas protegidas */}
+        {/* ===== RUTAS PARA ADMIN ===== */}
         <Route 
           path="/dashboard" 
           element={
-            <PrivateRoute>
+            <ProtectedRoute roles={['SUPER_ADMIN', 'CLINICAL_ADMIN']}>
               <Dashboard />
-            </PrivateRoute>
+            </ProtectedRoute>
           } 
         />
         <Route 
           path="/pacientes" 
           element={
-            <PrivateRoute>
+            <ProtectedRoute roles={['SUPER_ADMIN', 'CLINICAL_ADMIN']}>
               <PacientesList />
-            </PrivateRoute>
+            </ProtectedRoute>
           } 
         />
         <Route 
           path="/pacientes/nuevo" 
           element={
-            <PrivateRoute>
+            <ProtectedRoute roles={['SUPER_ADMIN', 'CLINICAL_ADMIN']}>
               <PacienteForm />
-            </PrivateRoute>
+            </ProtectedRoute>
           } 
         />
         <Route 
           path="/pacientes/:id" 
           element={
-            <PrivateRoute>
+            <ProtectedRoute roles={['SUPER_ADMIN', 'CLINICAL_ADMIN']}>
               <PacienteDetail />
-            </PrivateRoute>
+            </ProtectedRoute>
           } 
         />
         <Route 
           path="/consultas" 
           element={
-            <PrivateRoute>
+            <ProtectedRoute roles={['SUPER_ADMIN', 'CLINICAL_ADMIN']}>
               <ConsultasList />
-            </PrivateRoute>
+            </ProtectedRoute>
           } 
         />
         <Route 
           path="/examenes" 
           element={
-            <PrivateRoute>
+            <ProtectedRoute roles={['SUPER_ADMIN', 'CLINICAL_ADMIN']}>
               <ExamenesList />
-            </PrivateRoute>
+            </ProtectedRoute>
           } 
         />
         <Route 
           path="/seguimiento" 
           element={
-            <PrivateRoute>
+            <ProtectedRoute roles={['SUPER_ADMIN', 'CLINICAL_ADMIN']}>
               <SeguimientoList />
-            </PrivateRoute>
+            </ProtectedRoute>
           } 
         />
         <Route 
           path="/encuestas" 
           element={
-            <PrivateRoute>
+            <ProtectedRoute roles={['SUPER_ADMIN', 'CLINICAL_ADMIN']}>
               <EncuestasList />
-            </PrivateRoute>
-          } 
-        />
-        <Route 
-          path="/perfil" 
-          element={
-            <PrivateRoute>
-              <Perfil />
-            </PrivateRoute>
+            </ProtectedRoute>
           } 
         />
         
-        {/* Ruta catch-all */}
+        {/* ===== RUTAS COMPARTIDAS ===== */}
         <Route 
-          path="*" 
-          element={<Navigate to="/dashboard" replace />} 
+          path="/perfil" 
+          element={
+            <ProtectedRoute>
+              <Perfil />
+            </ProtectedRoute>
+          } 
         />
+        
+        {/* Ruta catch-all - redirigir según rol */}
+        <Route path="*" element={<RootRedirect />} />
       </Routes>
     </BrowserRouter>
   );

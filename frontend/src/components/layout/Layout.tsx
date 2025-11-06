@@ -14,8 +14,9 @@ export const Layout = ({ children }: LayoutProps) => {
     navigate('/login');
   };
 
-  // Roles que tienen acceso al menú completo
-  const isAdmin = hasAnyRole(['SUPER_ADMIN', 'ADMIN_GENERAL', 'CLINICAL_ADMIN', 'ADMIN_PRO_CLINICO']);
+  // Check user role
+  const isAdmin = hasAnyRole(['SUPER_ADMIN', 'CLINICAL_ADMIN']);
+  const isPerson = user?.roles.includes('PERSON');
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -27,6 +28,7 @@ export const Layout = ({ children }: LayoutProps) => {
                 <h1 className="text-xl font-bold text-primary-600">HMP Vitam</h1>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                {/* Menu for ADMIN roles */}
                 {isAdmin && (
                   <>
                     <Link
@@ -67,6 +69,26 @@ export const Layout = ({ children }: LayoutProps) => {
                     </Link>
                   </>
                 )}
+
+                {/* Menu for PERSON role */}
+                {isPerson && (
+                  <>
+                    <Link
+                      to="/mi-ficha"
+                      className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                    >
+                      Mi Ficha
+                    </Link>
+                    <Link
+                      to="/mis-encuestas"
+                      className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                    >
+                      Encuestas
+                    </Link>
+                  </>
+                )}
+
+                {/* Perfil - available for all roles */}
                 <Link
                   to="/perfil"
                   className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
@@ -81,7 +103,13 @@ export const Layout = ({ children }: LayoutProps) => {
                   {user?.firstName} {user?.lastName}
                   {user?.roles && user.roles.length > 0 && (
                     <span className="ml-2 text-xs text-gray-500">
-                      ({user.roles.join(', ')})
+                      ({user.roles.map(role => {
+                        // Translate roles to Spanish
+                        if (role === 'SUPER_ADMIN') return 'Super Admin';
+                        if (role === 'CLINICAL_ADMIN') return 'Admin Clínico';
+                        if (role === 'PERSON') return 'Paciente';
+                        return role;
+                      }).join(', ')})
                     </span>
                   )}
                 </span>

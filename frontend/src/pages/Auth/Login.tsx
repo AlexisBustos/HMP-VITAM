@@ -17,8 +17,17 @@ export const Login = () => {
       setLoading(true);
       setError('');
       const response = await authApi.login(data);
-      setAuth(response.data.user, response.data.accessToken);
-      navigate('/dashboard');
+      const user = response.data.user;
+      setAuth(user, response.data.accessToken);
+      
+      // Redirect based on role
+      if (user.roles.includes('PERSON')) {
+        navigate('/mi-ficha');
+      } else if (user.roles.includes('SUPER_ADMIN') || user.roles.includes('CLINICAL_ADMIN')) {
+        navigate('/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Error al iniciar sesión');
     } finally {
