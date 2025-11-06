@@ -40,7 +40,7 @@ export function ResponderEncuesta() {
           throw new Error('No se especificó ID de encuesta');
         }
 
-        const response = await apiClient.get(`/api/surveys/templates/${surveyId}`);
+        const response = await apiClient.get(`/surveys/templates/${surveyId}`);
         const rawTemplate = response.data.data || response.data;
 
         // Normalizar plantilla
