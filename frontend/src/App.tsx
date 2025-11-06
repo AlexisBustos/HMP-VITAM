@@ -18,9 +18,14 @@ import { Consentimiento } from './pages/Consentimiento/Consentimiento';
 
 // Componente para redireccionar si ya está autenticado
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, mustAcceptConsent } = useAuthStore();
   
   if (isAuthenticated() && user) {
+    // If user must accept consent, redirect to consent page
+    if (mustAcceptConsent) {
+      return <Navigate to="/consentimiento" replace />;
+    }
+    
     // Redirect based on role
     if (user.roles.includes('PERSON')) {
       return <Navigate to="/mi-ficha" replace />;
@@ -33,10 +38,15 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 // Componente para redireccionar la raíz según autenticación y rol
 function RootRedirect() {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, mustAcceptConsent } = useAuthStore();
   
   if (!isAuthenticated() || !user) {
     return <Navigate to="/login" replace />;
+  }
+  
+  // If user must accept consent, redirect to consent page
+  if (mustAcceptConsent) {
+    return <Navigate to="/consentimiento" replace />;
   }
   
   // Redirect based on role

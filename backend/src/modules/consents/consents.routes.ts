@@ -4,6 +4,7 @@ import {
   getActiveConsent,
   acceptConsent,
   getMyAcceptances,
+  debugConsentStatus,
 } from './consents.controller';
 
 const router = Router();
@@ -11,9 +12,9 @@ const router = Router();
 /**
  * GET /api/consents/active
  * Get the active consent template
- * Public endpoint (but requires auth to prevent abuse)
+ * Public endpoint (no auth required)
  */
-router.get('/active', requireAuth, getActiveConsent);
+router.get('/active', getActiveConsent);
 
 /**
  * POST /api/consents/accept
@@ -28,6 +29,13 @@ router.post('/accept', requireAuth, acceptConsent);
  * Requires authentication
  */
 router.get('/acceptances/mine', requireAuth, getMyAcceptances);
+
+/**
+ * GET /api/consents/debug
+ * Debug endpoint to check consent status
+ * TEMPORARY - Remove after debugging
+ */
+router.get('/debug', requireAuth, debugConsentStatus);
 
 export default router;
 
